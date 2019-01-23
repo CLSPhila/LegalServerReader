@@ -1,0 +1,15 @@
+Package: LegalServerReader
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.1.0
+Author: Nate V
+Maintainer: NateV <nvogel@clsphila.org>
+Description: Library for connecting to LegalServer Reports
+Imports:
+  gpg,
+  dplyr,
+  getPass,
+  configr
+License: MIT
+Encoding: UTF-8
+LazyData: true
