@@ -12,7 +12,10 @@ get.credentials <- function(credentials.path = "./credentials.gpg") {
     return
 }
 
-
+# Save credentials
+#
+# Ask a user for credentials to download reports from LegalServer, and
+# save those credentials to a file encrypted with gpg.
 save.credentials <- function(path.for.secrets = "./credentials.gpg", receiver) {
   writeLines("Please enter the legalserver api credentials");
   tmpfile <- tempfile()
@@ -23,8 +26,7 @@ save.credentials <- function(path.for.secrets = "./credentials.gpg", receiver) {
     ),
     reports = list(
       title = readline(prompt = "Name of report to download: "),
-      url = getPass::getPass(msg = "URL of report to download: "),
-      key = getPass::getPass(msg = "Report key: ")
+      url = getPass::getPass(msg = "URL of report to download (with api_key): ")
     )
   ), tmpfile, write.type = "ini")
   writeLines(gpg::gpg_encrypt(data = tmpfile, receiver = receiver), path.for.secrets)
