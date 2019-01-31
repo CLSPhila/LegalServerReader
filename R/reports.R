@@ -47,3 +47,32 @@ get.report <- function(credentials, report.name) {
   message("All done!")
   return(df)
 }
+
+#' Given a path to an .ini file (default is ./columnMapper.ini),
+#' return a list for mapping the column names returned in a
+#' report to more user-friendly names.
+#'
+#' As in
+#' [ReportName]
+#' original_col_name = New.Column.Name
+#'
+get.column.mapper <- function(config.file = "columnMapper.ini") {
+  return(configr::fetch.config(config.file))
+}
+
+
+#' Replace column names with friendlier names, given a list for mapping.
+#'
+#' The list has the form
+#' $old.name
+#' [[1]] "New Name"
+#' ...
+#'
+#' If using a list from get.column.mapper, you need to subset the correct
+#' mapper for a the dataframe (i.e. remap.columns(my.report, mapper[["myReportName"]]))
+#'
+remap.columns <- function(df, mapper) {
+  only.mapped.columns <- select(df, names(mapper))
+  names(only.mapped.columns) <- mapper[names(only.mapped.columns)]
+  return(only.mapped.columns)
+}
