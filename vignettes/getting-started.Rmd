@@ -1,0 +1,84 @@
+---
+title: "Getting Started"
+author: "Nate Vogel"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=FALSE
+)
+```
+
+
+`LegalServerReader` provides a few simple functions for accessing the LegalServer Reports API and storing credentials for the api in a way that is at least somewhat more secure than storing the credentials in plain text files in your project directory. 
+
+`LegalServerReader` uses your system's GPG (GNU Privacy Guard) to encrypt and then decrypt credentials for your LegalServer API reports. It then can download the report and provide it to you as a dataframe. You can also use this library to map LegalServer's internal column names from things like "built_in_matter_colname_colname" to more helpful names like "Case ID Number".
+
+
+# Getting Started using LegalServerReader
+
+## Generate a password-protected GPG key
+
+You'll be using the GNU Privacy Guard tool to encrypt and decrpyt credentials. See (https://help.github.com/articles/generating-a-new-gpg-key/)[here] for instructions on generating a key. Make sure you use a good passphrase for securing the key itself.
+
+## Save Credendtials for a report. 
+
+Load the library, and then use it to save and encrypt credentials to a LegalServer report.
+
+To save credentials, call the function `save.credentials`. This function requires you to identify the gpg key you will use for encryption, using the parameter `receiver`. This can be the ID of the key, or the email address of the key.
+
+`save.credentials` will interactively ask you for the LegalServer api username, password, a name for the report (which can be whatever you want to call it), and the url (including the api key) of the report you wish to download. 
+
+N.B. The name of the report you create here is just a friendly name for organizing credentials. It does not need to be related at all to what the LegalServer name of the report is.
+
+You can also include the `path.for.secrets`, which should be the path, including the filename, of the file where credentials should be saved. The file should end with the extension `.gpg`. By default, `save.credentials` will save the file in your working directory as `credentials.gpg`.
+
+Finally, another optional parameter is `return.creds`. By default this is `FALSE`, but if you set it to true, `save.credentials` will return a `list` object with your saved credentials. You will pass this list to the `get.report` function to download a report from LegalServer.
+
+```{r}
+library(LegalServerReader)
+creds <- save.credentials("test@test.test", path.for.secrets = "./credentials.gpg", return.creds = TRUE)
+```
+
+## Load saved credentials
+
+After you have saved credentials to a file, you can unencrypt them and load them into R as a list using `get.credentials`. The GPG application will be able to tell from the encrypted file which key was used to encrypt it, so you do not need to identify the key. You should identify the `credentials.path`, if it is anything other than the default "./credentials.gpg".
+
+```{r}
+creds <- get.credentials(credentials.path = "./credentials.gpg")
+```
+
+## Download a report.
+
+To download a report using your credentials, use `get.report`. This function needs two parameters. First, `credentials` is a list of api credentials in the format created by `save.credentials`. `report.name` is the name you created in the credentials for your report. 
+
+```{r}
+rpt <- get.report(credentials = creds, report.name = "My Report from LegalServer")
+```
+
+## Renaming Columns
+
+LegalServer reports download with names that reflect internal LegalServer structure, but are not as helpful in our context, like "builtin_matter_id_matter_id". So `LegalServerReader` provides a mechanism for configuring a mapping from LegalServer's column names to friendlier column names. 
+
+First, you'll create an a configuration file in the `.ini` format. It will have a section that starts with your report name (the same name you used in `credentials.gpg`). And in that section will be a list of `key=value` pairs mapping LegalServer's column names to your preferred names. For example:
+
+    [My Report]
+    unhelpful_internal_colname_1=Case ID
+    other_long_internal_colname=Client Age
+    
+Next, you'll load this mapping and use it to rename the columns of your report.
+
+```{r}
+mapper <- get.column.mapper(config.file="~/path/to/mapper.ini")
+rpt.renamed <- remap.columns(rpt, mapper)
+```
+
+That's it!

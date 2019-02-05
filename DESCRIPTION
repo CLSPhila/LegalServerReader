@@ -15,3 +15,7 @@ Imports:
 License: MIT
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
