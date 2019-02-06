@@ -33,19 +33,45 @@ You'll be using the GNU Privacy Guard tool to encrypt and decrpyt credentials. S
 
 Load the library, and then use it to save and encrypt credentials to a LegalServer report.
 
-To save credentials, call the function `save.credentials`. This function requires you to identify the gpg key you will use for encryption, using the parameter `receiver`. This can be the ID of the key, or the email address of the key.
+To save credentials, call the function `create.credentials`. This function will ask you for the username and password of the api user account from LegalServer.
 
-`save.credentials` will interactively ask you for the LegalServer api username, password, a name for the report (which can be whatever you want to call it), and the url (including the api key) of the report you wish to download. 
+```{r}
+  creds <- create.credentials()
+```
 
-N.B. The name of the report you create here is just a friendly name for organizing credentials. It does not need to be related at all to what the LegalServer name of the report is.
+Next, add reports to this set of credentials.
+
+```{r}
+  creds <- add.report("First Report")
+  creds <- add.report("Next Report")
+```
+
+`add.report` will prompt you to enter the url of the report. The url should include the api key that LegalServer generates for the report.
+
+The name of the report you create here is just a friendly name for organizing credentials. It does not need to be related at all to what the LegalServer name of the report is.
+
+Finally, save the credentials to an encrypted file, using your gpg key.
+
+```{r} 
+  save.credentials(creds, receiver = "mykey@test.com",
+                   path.for.secrets =  "path/to/file.gpg")
+```
+
+This function requires you to identify the gpg key you will use for encryption, using the parameter `receiver`. This can be the ID of the key, or the email address of the key.
 
 You can also include the `path.for.secrets`, which should be the path, including the filename, of the file where credentials should be saved. The file should end with the extension `.gpg`. By default, `save.credentials` will save the file in your working directory as `credentials.gpg`.
 
 Finally, another optional parameter is `return.creds`. By default this is `FALSE`, but if you set it to true, `save.credentials` will return a `list` object with your saved credentials. You will pass this list to the `get.report` function to download a report from LegalServer.
 
+You can use pipes to create and save credentials as in:
+
 ```{r}
-library(LegalServerReader)
-creds <- save.credentials("test@test.test", path.for.secrets = "./credentials.gpg", return.creds = TRUE)
+creds <- create.credentials() %>%
+         add.report("First Report") %>%
+         add.report("Second Report") %>%
+         save.credentials(receiver="mykey@test.com", 
+                          path.for.secrets="./secrets.gpg", 
+                          return.creds = TRUE)
 ```
 
 ## Load saved credentials
