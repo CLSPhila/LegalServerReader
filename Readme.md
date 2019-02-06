@@ -15,13 +15,13 @@ You may need to install additional libraries into your system, for example for p
 
 Second, create a gpg key, if you do not already have one, and make sure your key has a strong passphrase. Search online for how to do this, if you need help.
 
-Third, save encrypted credentials for accessing your report:
+Third, save encrypted credentials for accessing your report. See the Getting Started vignette for more details.
 
 ```
-> save.credentials("test@test.test", path.for.secrets = "mycredentials.gpg")
-Please enter the legalserver api credentials
-Name of report to download: Test Report
-API User name: api_user
+> create.credentials() %>%
+    add.report("Test Report") %>%
+    add.report("Second Report") %>%
+    save.credentials(receiver="testkey@test.test", path.for.secrets="./mycredentials.gpg", return.creds=FALSE)
 ```
 
 You will be prompted for secrets: the password for the api user account and the url of the legalserver report, including the api key.
@@ -46,4 +46,10 @@ To map the columns,
 ```
 mapper <- get.column.mapper("myconfigfile.ini")
 remapped.rpt <- remap.columns(rpt, mapper[["Test Report"]])
+```
+
+See the "Getting Started" vignette for more info:
+
+```
+browseVignettes("LegalServerReader")
 ```
