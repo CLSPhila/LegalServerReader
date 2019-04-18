@@ -18,6 +18,12 @@ get.report <- function(credentials, report.name) {
     httr::authenticate(credentials$global$api_user, credentials$global$api_pass)
   )
 
+  if (xml.response$status_code != 200) {
+    message(paste("Error requesting report:", xml.response$status_code))
+    return()
+  }
+
+  message("Request to LegalServer successful.")
   message("Parsing xml...")
   # Parse the xml as an xml doc, using xml2.
   doc <- httr::content(xml.response, as="parsed", type="text/xml", encoding="utf-8")
@@ -37,8 +43,6 @@ get.report <- function(credentials, report.name) {
     num.prior <- length(which(columns[0:idx] == col.name)) # number of prior times this column name happened.
     revised.columns <- append(revised.columns, ifelse(num.prior>1, paste0(col.name, num.prior), col.name))
   }
-
-
 
   # For each column, add the values of that column to a dataframe.
   message("Converting to a friendly dataframe...")
@@ -89,7 +93,7 @@ get.column.mapper <- function(config.file = "columnMapper.ini") {
 #' @param mapper List of column remappings, returned from `get.column.mapper`.
 #' @return Dataframe. `df` with the revised column names from `mapper`.
 remap.columns <- function(df, mapper) {
-  only.mapped.columns <- select(df, names(mapper))
+  only.mapped.columns <- dplyr::select(df, names(mapper))
   names(only.mapped.columns) <- mapper[names(only.mapped.columns)]
   return(only.mapped.columns)
 }

@@ -6,12 +6,12 @@ Author: Nate V
 Maintainer: NateV <nvogel@clsphila.org>
 Description: Library for connecting to LegalServer Reports
 Imports:
-  gpg,
   dplyr,
   getPass,
   configr,
   httr,
-  xml2
+  xml2,
+  readr
 License: MIT
 Encoding: UTF-8
 LazyData: true

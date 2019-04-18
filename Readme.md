@@ -13,15 +13,13 @@ install_git("devtools::install_git("C://path/to/pkga.git"))
 
 You may need to install additional libraries into your system, for example for parsing xml.
 
-Second, create a gpg key, if you do not already have one, and make sure your key has a strong passphrase. Search online for how to do this, if you need help.
-
-Third, save encrypted credentials for accessing your report. See the Getting Started vignette for more details.
+Next, save encrypted credentials for accessing your report. See the Getting Started vignette for more details.
 
 ```
 > create.credentials() %>%
     add.report("Test Report") %>%
     add.report("Second Report") %>%
-    save.credentials(receiver="testkey@test.test", path.for.secrets="./mycredentials.gpg", return.creds=FALSE)
+    save.credentials(path.for.secrets="./mycredentials.creds", return.creds=FALSE)
 ```
 
 You will be prompted for secrets: the password for the api user account and the url of the legalserver report, including the api key.

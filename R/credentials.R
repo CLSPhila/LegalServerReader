@@ -1,20 +1,44 @@
 
 #' Get Credentials
 #'
-#' Get gpg-encrypted credentials for accessing the LegalServer Report api.
+#' Get encrypted credentials for accessing the LegalServer Report api.
 #'
 #' @param credentials.path Character path to a gpg encrypted file of Report API credentials.
 #' @return A list with the unencrypted credentials stored to `credential.path`.
-get.credentials <- function(credentials.path = "./credentials.gpg") {
-  tmpfile <- tempfile()
-  writeLines(
-    gpg::gpg_decrypt(credentials.path),
-    con = tmpfile
-  )
-  on.exit(unlink(tmpfile))
-  return(
-    configr::read.config(file = tmpfile))
+get.credentials <- function(credentials.path = "./secret.creds") {
+  full.message <- sodium::hex2bin(readr::read_file(credentials.path))
+  nonce <- tail(full.message, 24)
+  secret <- head(full.message, -24)
+  key <- sodium::sha256(charToRaw(getPass::getPass("Password for encrypting credentials: ")))
+  revealed <- jsonlite::fromJSON(rawToChar(sodium::data_decrypt(secret, key, nonce)))
+  return(revealed)
 }
+
+#' Save credentials
+#'
+#' Save credentials to a file encrypted with sodium and a sha256 key.
+#'
+#' @param credentials A credentials list (See `create.credentials` and `add.report`)
+#' @param path.for.secrets A string that is the path, including file name, to the file where the encrypted
+#'     credentials should be written.
+#' @param return.creds Boolean indicating if the function should return the credentials list, in addition to
+#'     writing it to the disk.
+#' @return `credentials`, if `return.creds` is TRUE, otherwise nothing. This allows method chaining/piping.
+save.credentials <- function(credentials,
+                             path.for.secrets = "./secret.creds",
+                             return.creds = FALSE) {
+  msg <- charToRaw(jsonlite::toJSON(credentials, force=TRUE))
+  key <- sodium::sha256(charToRaw(getPass::getPass("Password for encrypting credentials: ")))
+  cipher <- sodium::data_encrypt(msg, key)
+  full.message <- paste0(sodium::bin2hex(cipher), sodium::bin2hex(attr(cipher,"nonce")))
+  file.conn <- file(path.for.secrets)
+  writeLines(full.message, file.conn)
+  if (return.creds) {
+    return(credentials)
+  }
+  return()
+}
+
 
 
 #' Create Credentials
@@ -28,11 +52,12 @@ get.credentials <- function(credentials.path = "./credentials.gpg") {
 #'     the username and password for a Report API user in LegalServer.
 create.credentials <- function() {
   writeLines("Please enter the legalserver api credentials");
+  creds <-
   return(
     list(
       global = list(
         api_user = readline(prompt = "API User name: "),
-        api_pass = getPass::getPass(msg = "API User Password: ")
+        api_pass = make.secret(getPass::getPass(msg = "API User Password: "))
       )
     )
   )
@@ -49,7 +74,7 @@ create.credentials <- function() {
 #'    you have added.
 add.report <- function(credentials, report.name) {
   credentials[[report.name]] <- list(
-    url = getPass::getPass(msg = "URL of report to download (with api_key): ")
+    url = make.secret(getPass::getPass(msg = "URL of report to download (with api_key): "))
   )
   return(credentials)
 }
@@ -78,29 +103,13 @@ list.reports <- function(credentials) {
   )
 }
 
-#' Save credentials
-#'
-#' Save credentials to a file encrypted with gpg.
-#'
-#' @param credentials A credentials list (See `create.credentials` and `add.report`)
-#' @param receiver A string that is the id or email identifier of the gpg key you wish to use to encrypt these
-#'     credentials.
-#' @param path.for.secrets A string that is the path, including file name, to the file where the encrypted
-#'     credentials should be written.
-#' @param return.creds Boolean indicating if the function should return the credentials list, in addition to
-#'     writing it to the disk.
-#' @return `credentials`, if `return.creds` is TRUE, otherwise nothing.
-save.credentials <- function(credentials,
-                             receiver,
-                             path.for.secrets = "./credentials.gpg",
-                             return.creds = FALSE) {
-  tmpfile <- tempfile()
-  configr::write.config(
-    credentials, tmpfile, write.type = "ini")
-  writeLines(gpg::gpg_encrypt(data = tmpfile, receiver = receiver), path.for.secrets)
-  on.exit(unlink(tmpfile))
-  if (return.creds) {
-    return(credentials)
-  }
-  return()
+#' Make an object a secret.
+make.secret <- function(s) {
+  class(s) <- "secret"
+  return(s)
+}
+
+#' S3 method for overriding default printing for things that shouldn't print to screen
+print.secret <- function(x, ...) {
+  print("...")
 }
