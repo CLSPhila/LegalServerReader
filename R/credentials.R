@@ -12,7 +12,7 @@ get.credentials <- function(credentials.path = "./secret.creds") {
   key <- sodium::sha256(charToRaw(getPass::getPass("Password for encrypting credentials: ")))
   revealed <- jsonlite::fromJSON(rawToChar(sodium::data_decrypt(secret, key, nonce)))
   revealed$global$api_pass <- make.secret(revealed$global$api_pass)
-  revealed <- lapply(creds, FUN=function(item) {
+  revealed <- lapply(revealed, FUN=function(item) {
     if ("url" %in% names(item)) {item$url <- make.secret(item$url)}; return(item)})
   return(revealed)
 }

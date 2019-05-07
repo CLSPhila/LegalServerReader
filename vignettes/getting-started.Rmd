@@ -67,8 +67,7 @@ You can use pipes to create and save credentials as in:
 creds <- create.credentials() %>%
          add.report("First Report") %>%
          add.report("Second Report") %>%
-         save.credentials(receiver="mykey@test.com", 
-                          path.for.secrets="./secret.creds", 
+         save.credentials(path.for.secrets="./secret.creds", 
                           return.creds = TRUE)
 ```
 
