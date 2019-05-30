@@ -2,6 +2,8 @@
 
 Library for accessing LegalServer's Reports API
 
+This project is experimental, so use at your own risk. Also note that this project isn't endorsed or supported by LegalServer in any way. 
+
 ## Getting Started
 
 First, install the library.
