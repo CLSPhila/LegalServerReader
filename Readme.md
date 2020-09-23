@@ -10,7 +10,7 @@ First, install the library.
 
 
 ```
-install_git(devtools::install_git("C://path/to/pkga.git"))
+devtools::install_github("https://github.com/CLSPhila/LegalServerReader")
 ```
 
 You may need to install additional libraries into your system, for example for parsing xml.
