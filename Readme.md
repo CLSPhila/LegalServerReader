@@ -15,6 +15,11 @@ devtools::install_github("https://github.com/CLSPhila/LegalServerReader")
 
 You may need to install additional libraries into your system, for example for parsing xml.
 
+Dependencies include: 
+
+* Sodium, available on Debian as`libsodium-dev`,
+* 
+
 Next, save encrypted credentials for accessing your report. See the Getting Started vignette for more details.
 
 ```
