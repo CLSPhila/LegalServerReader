@@ -37,8 +37,6 @@ You also need to manage the credentials for accessing LegalServer Reports. The A
 
 Finally, LegalServer has a limited capacity to download large reports. The API and this library make it very easy to download enormous amounts of data. Use this power responsibly! Avoid making repeated requests and consider caching partly-processed data. You might try writing your code to separate downloading from processing, so that raw data sits in a variable that you can use without re-downloading anything from LegalServer. 
 
-This project is experimental, so use at your own risk. Also note that this project isn't endorsed or supported by LegalServer in any way. 
-
 ## Getting Started
 
 First, install the library.
