@@ -1,8 +1,15 @@
 
 
-# Get Reports
-#
-#
+#' Get Report
+#'
+#' Download a report from legalserver, and transform it into a dataframe.
+#'
+#' The report will download with LEgalServer's internal column names. These may not
+#' be very helpful to you. See `remap.columns` for a tool to rename the columns.
+#'
+#' @param credentials A credentials list (See `create.credentials` and `add.report`)
+#' @param report.name The name of a report, as stored in the `credentials` list.
+#' @return Dataframe of the report you downloaded.
 get.report <- function(credentials, report.name) {
   # Get the report as xml from LegalServer using supplied credentials
   message("Downloading report...")
@@ -11,6 +18,12 @@ get.report <- function(credentials, report.name) {
     httr::authenticate(credentials$global$api_user, credentials$global$api_pass)
   )
 
+  if (xml.response$status_code != 200) {
+    message(paste("Error requesting report:", xml.response$status_code))
+    return()
+  }
+
+  message("Request to LegalServer successful.")
   message("Parsing xml...")
   # Parse the xml as an xml doc, using xml2.
   doc <- httr::content(xml.response, as="parsed", type="text/xml", encoding="utf-8")
@@ -31,8 +44,6 @@ get.report <- function(credentials, report.name) {
     revised.columns <- append(revised.columns, ifelse(num.prior>1, paste0(col.name, num.prior), col.name))
   }
 
-
-
   # For each column, add the values of that column to a dataframe.
   message("Converting to a friendly dataframe...")
 
@@ -48,6 +59,8 @@ get.report <- function(credentials, report.name) {
   return(df)
 }
 
+#' Get Column Mapper
+#'
 #' Given a path to an .ini file (default is ./columnMapper.ini),
 #' return a list for mapping the column names returned in a
 #' report to more user-friendly names.
@@ -56,6 +69,9 @@ get.report <- function(credentials, report.name) {
 #' [ReportName]
 #' original_col_name = New.Column.Name
 #'
+#' @param config.file String path to a config file that maps a report's LegalServer-internal
+#'     column names to your preferred names.
+#' @return A list of the mappings defined in `config.file`.
 get.column.mapper <- function(config.file = "columnMapper.ini") {
   return(configr::fetch.config(config.file))
 }
@@ -64,15 +80,20 @@ get.column.mapper <- function(config.file = "columnMapper.ini") {
 #' Replace column names with friendlier names, given a list for mapping.
 #'
 #' The list has the form
+#' ```
 #' $old.name
 #' [[1]] "New Name"
 #' ...
+#' ```
 #'
 #' If using a list from get.column.mapper, you need to subset the correct
 #' mapper for a the dataframe (i.e. remap.columns(my.report, mapper[["myReportName"]]))
 #'
+#' @param df Dataframe of a report from LegalServer, returned from `get.report`
+#' @param mapper List of column remappings, returned from `get.column.mapper`.
+#' @return Dataframe. `df` with the revised column names from `mapper`.
 remap.columns <- function(df, mapper) {
-  only.mapped.columns <- select(df, names(mapper))
+  only.mapped.columns <- dplyr::select(df, names(mapper))
   names(only.mapped.columns) <- mapper[names(only.mapped.columns)]
   return(only.mapped.columns)
 }

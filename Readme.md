@@ -37,6 +37,8 @@ You also need to manage the credentials for accessing LegalServer Reports. The A
 
 Finally, LegalServer has a limited capacity to download large reports. The API and this library make it very easy to download enormous amounts of data. Use this power responsibly! Avoid making repeated requests and consider caching partly-processed data. You might try writing your code to separate downloading from processing, so that raw data sits in a variable that you can use without re-downloading anything from LegalServer. 
 
+This project is experimental, so use at your own risk. Also note that this project isn't endorsed or supported by LegalServer in any way. 
+
 ## Getting Started
 
 First, install the library.
@@ -48,15 +50,19 @@ devtools::install_github("https://github.com/CLSPhila/LegalServerReader")
 
 You may need to install additional libraries into your system, for example for parsing xml. When you run the command above, the installation messages will let you know what else you might need.
 
-Second, create the credentials for accessing a report.
 
-Second, save encrypted credentials for accessing your report:
+Dependencies include: 
+
+* Sodium, available on Debian as`libsodium-dev`,
+* 
+
+Next, save encrypted credentials for accessing your report. See the Getting Started vignette for more details.
 
 ```
-> save.credentials("test@test.test", path.for.secrets = "mycredentials.secrets")
-Please enter the legalserver api credentials
-Name of report to download: Test Report
-API User name: api_user
+> create.credentials() %>%
+    add.report("Test Report") %>%
+    add.report("Second Report") %>%
+    save.credentials(path.for.secrets="./mycredentials.creds", return.creds=FALSE)
 ```
 
 You will be prompted for secrets: the password for the api user account and the url of the legalserver report, including the api key.
@@ -81,4 +87,10 @@ To map the columns,
 ```
 mapper <- get.column.mapper("myconfigfile.ini")
 remapped.rpt <- remap.columns(rpt, mapper[["Test Report"]])
+```
+
+See the "Getting Started" vignette for more info:
+
+```
+browseVignettes("LegalServerReader")
 ```

@@ -4,7 +4,7 @@ author: "Nate Vogel"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Getting Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,15 +25,14 @@ knitr::opts_chunk$set(
 
 # Getting Started using LegalServerReader
 
-## Generate a password-protected GPG key
-
-You'll be using the GNU Privacy Guard tool to encrypt and decrpyt credentials. See (https://help.github.com/articles/generating-a-new-gpg-key/)[here] for instructions on generating a key. Make sure you use a good passphrase for securing the key itself.
 
 ## Save Credendtials for a report. 
 
 Load the library, and then use it to save and encrypt credentials to a LegalServer report.
 
 To save credentials, call the function `create.credentials`. This function will ask you for the username and password of the api user account from LegalServer.
+
+This library uses `sodium` to symmetrically encrypt your credentials.
 
 ```{r}
   creds <- create.credentials()
@@ -53,13 +52,12 @@ The name of the report you create here is just a friendly name for organizing cr
 Finally, save the credentials to an encrypted file, using your gpg key.
 
 ```{r} 
-  save.credentials(creds, receiver = "mykey@test.com",
-                   path.for.secrets =  "path/to/file.gpg")
+  save.credentials(creds, path.for.secrets =  "path/to/secret.creds")
 ```
 
-This function requires you to identify the gpg key you will use for encryption, using the parameter `receiver`. This can be the ID of the key, or the email address of the key.
+This function will prompt you for a password to encrypt these credentials.
 
-You can also include the `path.for.secrets`, which should be the path, including the filename, of the file where credentials should be saved. The file should end with the extension `.gpg`. By default, `save.credentials` will save the file in your working directory as `credentials.gpg`.
+You can also include the `path.for.secrets`, which should be the path, including the filename, of the file where credentials should be saved. By default, `save.credentials` will save the file in your working directory as `secret.creds`.
 
 Finally, another optional parameter is `return.creds`. By default this is `FALSE`, but if you set it to true, `save.credentials` will return a `list` object with your saved credentials. You will pass this list to the `get.report` function to download a report from LegalServer.
 
@@ -69,17 +67,16 @@ You can use pipes to create and save credentials as in:
 creds <- create.credentials() %>%
          add.report("First Report") %>%
          add.report("Second Report") %>%
-         save.credentials(receiver="mykey@test.com", 
-                          path.for.secrets="./secrets.gpg", 
+         save.credentials(path.for.secrets="./secret.creds", 
                           return.creds = TRUE)
 ```
 
 ## Load saved credentials
 
-After you have saved credentials to a file, you can unencrypt them and load them into R as a list using `get.credentials`. The GPG application will be able to tell from the encrypted file which key was used to encrypt it, so you do not need to identify the key. You should identify the `credentials.path`, if it is anything other than the default "./credentials.gpg".
+After you have saved credentials to a file, you can unencrypt them and load them into R as a list using `get.credentials`. You should identify the `credentials.path`, if it is anything other than the default "./secret.creds".
 
 ```{r}
-creds <- get.credentials(credentials.path = "./credentials.gpg")
+creds <- get.credentials(credentials.path = "./secret.creds")
 ```
 
 ## Download a report.
