@@ -20,23 +20,19 @@ knitr::opts_chunk$set(
 
 `LegalServerReader` provides a few simple functions for accessing the LegalServer Reports API and storing credentials for the api in a way that is at least somewhat more secure than storing the credentials in plain text files in your project directory. 
 
-`LegalServerReader` uses your system's GPG (GNU Privacy Guard) to encrypt and then decrypt credentials for your LegalServer API reports. It then can download the report and provide it to you as a dataframe. You can also use this library to map LegalServer's internal column names from things like "built_in_matter_colname_colname" to more helpful names like "Case ID Number".
+`LegalServerReader` uses an encryption library called Sodium to encrypt and then decrypt credentials for your LegalServer API reports. It then can download the report and provide it to you as a dataframe. You can also use this library to map LegalServer's internal column names from things like "built_in_matter_colname_colname" to more helpful names like "Case ID Number".
 
 
 # Getting Started using LegalServerReader
 
 
-## Save Credendtials for a report. 
+## Create Credendtials for a report. 
 
 Load the library, and then use it to save and encrypt credentials to a LegalServer report.
 
-To save credentials, call the function `create.credentials`. This function will ask you for the username and password of the api user account from LegalServer.
+The library supports both types of Legal Server reports api credentials. Basic Auth credentials have a username and a password. Bearer Token credentials have a secret token.
 
-This library uses `sodium` to symmetrically encrypt your credentials.
-
-```{r}
-  creds <- create.credentials()
-```
+To create credentials, call the function `create.bearer.credentials` or `create.basic.auth.credentials`. This function will ask you for the username and password of the api user account from LegalServer, or the secret authentication token.
 
 Next, add reports to this set of credentials.
 
@@ -49,15 +45,21 @@ Next, add reports to this set of credentials.
 
 The name of the report you create here is just a friendly name for organizing credentials. It does not need to be related at all to what the LegalServer name of the report is.
 
-Finally, save the credentials to an encrypted file, using your gpg key.
+## Save Credentials to a file
+
+This library uses `sodium` to symmetrically encrypt your credentials.
+
+```{r}
+  creds <- create.credentials()
+```
+
+Finally, save the credentials to an encrypted file. `save.credentials` will ask you for a password for encryption.
 
 ```{r} 
   save.credentials(creds, path.for.secrets =  "path/to/secret.creds")
 ```
 
-This function will prompt you for a password to encrypt these credentials.
-
-You can also include the `path.for.secrets`, which should be the path, including the filename, of the file where credentials should be saved. By default, `save.credentials` will save the file in your working directory as `secret.creds`.
+The `path.for.secrets` is the path to the encrypted credentials file. 
 
 Finally, another optional parameter is `return.creds`. By default this is `FALSE`, but if you set it to true, `save.credentials` will return a `list` object with your saved credentials. You will pass this list to the `get.report` function to download a report from LegalServer.
 
@@ -67,16 +69,16 @@ You can use pipes to create and save credentials as in:
 creds <- create.credentials() %>%
          add.report("First Report") %>%
          add.report("Second Report") %>%
-         save.credentials(path.for.secrets="./secret.creds", 
+         save.credentials(path.for.secrets="~/secret.creds", 
                           return.creds = TRUE)
 ```
 
 ## Load saved credentials
 
-After you have saved credentials to a file, you can unencrypt them and load them into R as a list using `get.credentials`. You should identify the `credentials.path`, if it is anything other than the default "./secret.creds".
+After you have saved credentials to a file, you can unencrypt them and load them into R as a list using `get.credentials`. You should identify the `credentials.path`.
 
 ```{r}
-creds <- get.credentials(credentials.path = "./secret.creds")
+creds <- get.credentials(credentials.path = "~/secret.creds")
 ```
 
 ## Download a report.
@@ -89,7 +91,7 @@ rpt <- get.report(credentials = creds, report.name = "My Report from LegalServer
 
 ## Renaming Columns
 
-LegalServer reports download with names that reflect internal LegalServer structure, but are not as helpful in our context, like "builtin_matter_id_matter_id". So `LegalServerReader` provides a mechanism for configuring a mapping from LegalServer's column names to friendlier column names. 
+If you'd like to rename the columns that get downloaded from LegalServer, `LegalServerReader` provides a mechanism for configuring a mapping from LegalServer's column names to friendlier column names. 
 
 First, you'll create an a configuration file in the `.ini` format. It will have a section that starts with your report name (the same name you used in `credentials.gpg`). And in that section will be a list of `key=value` pairs mapping LegalServer's column names to your preferred names. For example:
 
