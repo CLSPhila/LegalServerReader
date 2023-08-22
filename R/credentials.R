@@ -5,7 +5,7 @@
 #'
 #' @param credentials.path Character path to a gpg encrypted file of Report API credentials.
 #' @return A list with the unencrypted credentials stored to `credential.path`.
-get.credentials <- function(credentials.path = "./secret.creds") {
+get.credentials <- function(credentials.path) {
   full.message <- sodium::hex2bin(readr::read_file(credentials.path))
   nonce <- tail(full.message, 24)
   secret <- head(full.message, -24)
@@ -14,6 +14,11 @@ get.credentials <- function(credentials.path = "./secret.creds") {
   revealed$global$api_pass <- make.secret(revealed$global$api_pass)
   revealed <- lapply(revealed, FUN=function(item) {
     if ("url" %in% names(item)) {item$url <- make.secret(item$url)}; return(item)})
+  if (exists("bearer_token", revealed$global)) {
+    class(revealed) <- "BearerTokenAuth"
+  } else if (exists("api_user", revealed$global)) {
+    class(revealed) <- "BasicAuth"
+  }
   return(revealed)
 }
 
@@ -28,7 +33,7 @@ get.credentials <- function(credentials.path = "./secret.creds") {
 #'     writing it to the disk.
 #' @return `credentials`, if `return.creds` is TRUE, otherwise nothing. This allows method chaining/piping.
 save.credentials <- function(credentials,
-                             path.for.secrets = "./secret.creds",
+                             path.for.secrets,
                              return.creds = FALSE) {
   msg <- charToRaw(jsonlite::toJSON(credentials, force=TRUE))
   key <- sodium::sha256(charToRaw(getPass::getPass("Password for encrypting credentials: ")))
@@ -44,7 +49,7 @@ save.credentials <- function(credentials,
 
 
 
-#' Create Credentials
+#' Create Credentials using Basic HTTP Auth.
 #'
 #' Create a credentials list with just the credentials for the api user.
 #'
@@ -53,18 +58,36 @@ save.credentials <- function(credentials,
 #'
 #' @return A list that contains a global element, which is a list containing
 #'     the username and password for a Report API user in LegalServer.
-create.credentials <- function() {
+create.basic.auth.credentials <- function() {
   writeLines("Please enter the legalserver api credentials");
   creds <-
-  return(
     list(
       global = list(
         api_user = readline(prompt = "API User name: "),
         api_pass = make.secret(getPass::getPass(msg = "API User Password: "))
       )
     )
-  )
+  class(creds) <- "BasicAuth"
+  return(creds)
 }
+
+#' Create credentials that use Token Authentication
+#'
+#' Create a credentials list that has the creds for using bearer token auth.
+#'
+#' @return A list with a bearer token for accessing LegalServer Reports.
+create.bearer.credentials <- function() {
+  writeLines("Please enter the LegalServer Bearer token credentials")
+  creds <-
+    list(
+      global = list(
+        bearer_token = make.secret(getPass::getPass(msg = "API Bearer Token: "))
+      )
+    )
+  class(creds) <- "BearerTokenAuth"
+  return(creds)
+}
+
 
 #' Save Report Key
 #'
@@ -77,7 +100,7 @@ create.credentials <- function() {
 #'    you have added.
 add.report <- function(credentials, report.name) {
   credentials[[report.name]] <- list(
-    url = make.secret(getPass::getPass(msg = "URL of report to download (with api_key): "))
+    url = make.secret(getPass::getPass(msg = paste0("URL of '", report.name, "' (with api_key): ")))
   )
   return(credentials)
 }

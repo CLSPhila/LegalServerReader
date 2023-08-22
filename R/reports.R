@@ -10,13 +10,26 @@
 #' @param credentials A credentials list (See `create.credentials` and `add.report`)
 #' @param report.name The name of a report, as stored in the `credentials` list.
 #' @return Dataframe of the report you downloaded.
-get.report <- function(credentials, report.name) {
+get.report <- function(credentials = NULL, report.name) {
   # Get the report as xml from LegalServer using supplied credentials
   message("Downloading report...")
-  xml.response <- httr::GET(
-    credentials[[report.name]]$url,
-    httr::authenticate(credentials$global$api_user, credentials$global$api_pass)
-  )
+
+  if (is.null(credentials)) {
+    credentials <- LegalServerReader::get.credentials() %>%
+      LegalServerReader::add.report(report.name = report.name)
+  }
+
+  if (class(credentials) == "BasicAuth") {
+    xml.response <- httr::GET(
+      credentials[[report.name]]$url,
+      httr::authenticate(credentials$global$api_user, credentials$global$api_pass)
+    )
+  } else if (class(credentials) == "BearerTokenAuth") {
+    xml.response <- httr::GET(
+      credentials[[report.name]]$url,
+      httr::add_headers(Authorization = paste0("Bearer ", credentials$global$bearer_token))
+    )
+  }
 
   if (xml.response$status_code != 200) {
     message(paste("Error requesting report:", xml.response$status_code))

@@ -1,10 +1,10 @@
 Package: LegalServerReader
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
+Title: LegalServer Report API Client
+Version: 0.2.0
 Author: Nate V
 Maintainer: NateV <nvogel@clsphila.org>
-Description: Library for connecting to LegalServer Reports
+Description: Library for using the LegalServer Reports API
 Imports:
   dplyr,
   getPass,
