@@ -11,12 +11,13 @@ get.credentials <- function(credentials.path) {
   secret <- head(full.message, -24)
   key <- sodium::sha256(charToRaw(getPass::getPass("Password for encrypting credentials: ")))
   revealed <- jsonlite::fromJSON(rawToChar(sodium::data_decrypt(secret, key, nonce)))
-  revealed$global$api_pass <- make.secret(revealed$global$api_pass)
   revealed <- lapply(revealed, FUN=function(item) {
     if ("url" %in% names(item)) {item$url <- make.secret(item$url)}; return(item)})
   if (exists("bearer_token", revealed$global)) {
+    revealed$global$bearer_token <- make.secret(revealed$global$bearer_token)
     class(revealed) <- "BearerTokenAuth"
   } else if (exists("api_user", revealed$global)) {
+    revealed$global$api_pass <- make.secret(revealed$global$api_pass)
     class(revealed) <- "BasicAuth"
   }
   return(revealed)
